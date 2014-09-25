@@ -82,6 +82,7 @@ public class GMSLocationProvider implements LocationProvider, GooglePlayServices
 
 		if (!locationClient.isConnected())
 		{
+			locationClient.connect();
 			pendingRequests.put(requestId, new Runnable()
 			{
 				@Override public void run()
@@ -89,7 +90,6 @@ public class GMSLocationProvider implements LocationProvider, GooglePlayServices
 					internalRequestSingleUpdate(requestId, request, listener);
 				}
 			});
-			locationClient.connect();
 		}
 		else
 		{
