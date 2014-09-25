@@ -143,6 +143,15 @@ public class Bearing
 	}
 
 	/**
+	 * Gets the last known location available from the available location provider
+	 * @return The location or null
+	 */
+	public Location getLastLocation()
+	{
+		return new CurrentLocationTask(context).getLastLocation();
+	}
+
+	/**
 	 * Locate the current user using the best available method on the device
 	 * @return The task to configure and start
 	 */
