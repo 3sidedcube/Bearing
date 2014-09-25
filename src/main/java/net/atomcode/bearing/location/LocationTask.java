@@ -52,6 +52,11 @@ public abstract class LocationTask implements BearingTask
 		request = new LocationProviderRequest();
 	}
 
+	public Location getLastLocation()
+	{
+		return locationProvider.getLastKnownLocation(request);
+	}
+
 	@Override
 	public BearingTask start()
 	{
