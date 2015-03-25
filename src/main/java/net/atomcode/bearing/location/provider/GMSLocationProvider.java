@@ -40,6 +40,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 
 	private HashMap<String, Runnable> pendingRequests;
 	private Map<String, com.google.android.gms.location.LocationListener> runningRequests;
+	private Location lastLocation;
 
 	@Override
 	public void create(Context context)
@@ -73,11 +74,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	@Override
 	public Location getLastKnownLocation(LocationProviderRequest request)
 	{
-		if (apiClient.isConnected())
-		{
-			return LocationServices.FusedLocationApi.getLastLocation(apiClient);
-		}
-		return null;
+		return lastLocation;
 	}
 
 	@Override
@@ -302,6 +299,8 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	 */
 	@Override public void onConnected(Bundle bundle)
 	{
+		lastLocation = LocationServices.FusedLocationApi.getLastLocation(apiClient);
+
 		// Connected. Perform pending requests
 		for (Runnable runnable : pendingRequests.values())
 		{
