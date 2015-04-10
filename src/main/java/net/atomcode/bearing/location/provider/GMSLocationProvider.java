@@ -97,6 +97,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		{
 			internalRequestSingleUpdate(requestId, request, listener);
 		}
+
 		return requestId;
 	}
 
@@ -266,6 +267,17 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		if (apiClient.isConnected())
 		{
 			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
+		}
+		else
+		{
+			pendingRequests.put(requestId, new Runnable()
+			{
+				@Override public void run()
+				{
+					internalRequestSingleUpdate(requestId, request, listener);
+				}
+			});
+			apiClient.connect();
 		}
 	}
 
