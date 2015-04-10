@@ -11,6 +11,7 @@ import net.atomcode.bearing.location.LocationListener;
 import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -54,22 +55,38 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public Location getLastKnownLocation(LocationProviderRequest request)
 	{
-		String provider = getProviderForRequest(request);
-		return locationManager.getLastKnownLocation(provider);
+		ArrayList<String> providers = getProviderForRequest(request);
+		long lastTime = Long.MIN_VALUE;
+		Location latestLocation = null;
+
+		for (String provider : providers)
+		{
+			Location location = locationManager.getLastKnownLocation(provider);
+
+			if (location != null)
+			{
+				if (location.getTime() > lastTime)
+				{
+					latestLocation = location;
+					lastTime = location.getTime();
+				}
+			}
+		}
+
+		return latestLocation;
 	}
 
 	@Override
 	public String requestSingleLocationUpdate(LocationProviderRequest request, final LocationListener listener)
 	{
-		String provider = getProviderForRequest(request);
+		ArrayList<String> providers = getProviderForRequest(request);
 
 		if (request.useCache)
 		{
-			Location lastKnownUserLocation = locationManager.getLastKnownLocation(provider);
+			Location lastKnownUserLocation = getLastKnownLocation(request);
 
 			// Check if last known location is valid
-			if (lastKnownUserLocation != null &&
-					System.currentTimeMillis() - lastKnownUserLocation.getTime() < request.cacheExpiry)
+			if (lastKnownUserLocation != null && System.currentTimeMillis() - lastKnownUserLocation.getTime() < request.cacheExpiry)
 			{
 				if (lastKnownUserLocation.getAccuracy() < request.accuracy.value)
 				{
@@ -92,6 +109,7 @@ public class LegacyLocationProvider implements LocationProvider
 				{
 					listener.onUpdate(location);
 				}
+
 				runningRequests.remove(requestId);
 			}
 
@@ -111,7 +129,10 @@ public class LegacyLocationProvider implements LocationProvider
 			}
 		});
 
-		locationManager.requestSingleUpdate(provider, runningRequests.get(requestId), Looper.getMainLooper());
+		for (String provider : providers)
+		{
+			locationManager.requestSingleUpdate(provider, runningRequests.get(requestId), Looper.getMainLooper());
+		}
 
 		return requestId;
 	}
@@ -188,27 +209,28 @@ public class LegacyLocationProvider implements LocationProvider
 	/**
 	 * Get the provider for the given request
 	 */
-	private String getProviderForRequest(LocationProviderRequest request)
+	private ArrayList<String> getProviderForRequest(LocationProviderRequest request)
 	{
-		String provider = null;
+		ArrayList<String> providers = new ArrayList<>();
 		switch (request.accuracy)
 		{
-			case LOW:
-				provider = LocationManager.PASSIVE_PROVIDER;
-				if (locationManager.isProviderEnabled(provider))
-				{
-					break;
-				}
-			case MEDIUM:
-				provider = LocationManager.NETWORK_PROVIDER;
-				if (locationManager.isProviderEnabled(provider))
-				{
-					break;
-				}
 			case HIGH:
-				provider = LocationManager.GPS_PROVIDER;
+				providers.add(LocationManager.GPS_PROVIDER);
+
+			case MEDIUM:
+				if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
+				{
+					providers.add(LocationManager.NETWORK_PROVIDER);
+				}
+
+			case LOW:
+				if (locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
+				{
+					providers.add(LocationManager.PASSIVE_PROVIDER);
+				}
 		}
-		return provider;
+
+		return providers;
 	}
 
 }
