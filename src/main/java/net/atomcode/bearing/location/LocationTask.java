@@ -8,7 +8,6 @@ import android.os.Looper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
-import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.BearingTask;
 import net.atomcode.bearing.location.provider.GMSLocationProvider;
 import net.atomcode.bearing.location.provider.LegacyLocationProvider;
@@ -37,13 +36,9 @@ public abstract class LocationTask implements BearingTask
 		{
 			locationProvider = GMSLocationProvider.getInstance();
 		}
-		else if (Bearing.isLocationServicesAvailable(context))
-		{
-			locationProvider = LegacyLocationProvider.getInstance();
-		}
 		else
 		{
-			throw new IllegalStateException("No location provider available on this device!");
+			locationProvider = LegacyLocationProvider.getInstance();
 		}
 
 		locationProvider.create(context);
