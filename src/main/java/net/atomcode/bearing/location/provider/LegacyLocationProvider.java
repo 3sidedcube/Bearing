@@ -73,8 +73,6 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public String requestSingleLocationUpdate(LocationProviderRequest request, final LocationListener listener)
 	{
-		ArrayList<String> providers = getProviderForRequest(request);
-
 		if (request.useCache)
 		{
 			Location lastKnownUserLocation = getLastKnownLocation(request);
@@ -118,19 +116,15 @@ public class LegacyLocationProvider implements LocationProvider
 			}
 		});
 
-		for (String provider : providers)
-		{
-			locationManager.requestSingleUpdate(provider, runningRequests.get(requestId), Looper.getMainLooper());
-		}
-
+		Criteria criteria = getCriteriaFromRequest(request);
+		String bestProvider = locationManager.getBestProvider(criteria, true);
+		locationManager.requestSingleUpdate(bestProvider, runningRequests.get(requestId), Looper.getMainLooper());
+		
 		return requestId;
 	}
 
-	@Override
-	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
+	private Criteria getCriteriaFromRequest(LocationProviderRequest request)
 	{
-		String requestId = UUID.randomUUID().toString();
-
 		int powerCriteria = Criteria.POWER_LOW;
 		int accuracyCriteria = Criteria.ACCURACY_MEDIUM;
 
@@ -153,6 +147,15 @@ public class LegacyLocationProvider implements LocationProvider
 		criteria.setPowerRequirement(powerCriteria);
 		criteria.setAccuracy(accuracyCriteria);
 
+		return criteria;
+	}
+
+	@Override
+	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
+	{
+		String requestId = UUID.randomUUID().toString();
+
+		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
 
 		runningRequests.put(requestId, new android.location.LocationListener()
@@ -193,33 +196,6 @@ public class LegacyLocationProvider implements LocationProvider
 			locationManager.removeUpdates(runningRequests.get(requestId));
 			runningRequests.remove(requestId);
 		}
-	}
-
-	/**
-	 * Get the provider for the given request
-	 */
-	private ArrayList<String> getProviderForRequest(LocationProviderRequest request)
-	{
-		ArrayList<String> providers = new ArrayList<>();
-		switch (request.accuracy)
-		{
-			case HIGH:
-				providers.add(LocationManager.GPS_PROVIDER);
-
-			case MEDIUM:
-				if (locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER))
-				{
-					providers.add(LocationManager.NETWORK_PROVIDER);
-				}
-
-			case LOW:
-				if (locationManager.isProviderEnabled(LocationManager.PASSIVE_PROVIDER))
-				{
-					providers.add(LocationManager.PASSIVE_PROVIDER);
-				}
-		}
-
-		return providers;
 	}
 
 }
