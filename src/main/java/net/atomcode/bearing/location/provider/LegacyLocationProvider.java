@@ -162,7 +162,7 @@ public class LegacyLocationProvider implements LocationProvider
 		criteria.setPowerRequirement(powerCriteria);
 		criteria.setAccuracy(accuracyCriteria);
 
-		String bestProvider = locationManager.getBestProvider(criteria, false);
+		String bestProvider = locationManager.getBestProvider(criteria, true);
 
 		runningRequests.put(requestId, new android.location.LocationListener()
 		{
