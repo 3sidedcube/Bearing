@@ -5,8 +5,6 @@ package net.atomcode.bearing;
  */
 public interface BearingTask
 {
-	public static final int FALLBACK_NONE = 0x0;
-
 	/**
 	 * Begin the defined task
 	 */
