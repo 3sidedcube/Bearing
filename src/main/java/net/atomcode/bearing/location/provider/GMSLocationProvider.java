@@ -234,6 +234,24 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 
 		if (apiClient.isConnected())
 		{
+			if (request.useCache)
+			{
+				Location lastKnownUserLocation = getLastKnownLocation(request);
+
+				// Check if last known location is valid
+				if (lastKnownUserLocation != null && System.currentTimeMillis() - lastKnownUserLocation.getTime() < request.cacheExpiry)
+				{
+					if (lastKnownUserLocation.getAccuracy() < request.accuracy.value)
+					{
+						if (listener != null)
+						{
+							listener.onUpdate(lastKnownUserLocation);
+							return;
+						}
+					}
+				}
+			}
+			
 			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
 		}
 		else
