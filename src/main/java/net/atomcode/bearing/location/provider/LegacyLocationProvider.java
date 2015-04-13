@@ -53,21 +53,17 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public Location getLastKnownLocation(LocationProviderRequest request)
 	{
-		ArrayList<String> providers = getProviderForRequest(request);
-		long lastTime = Long.MIN_VALUE;
+		long lastTime = System.currentTimeMillis() - request.cacheExpiry;
 		Location latestLocation = null;
 
-		for (String provider : providers)
+		for (String provider : locationManager.getProviders(true))
 		{
 			Location location = locationManager.getLastKnownLocation(provider);
 
-			if (location != null)
+			if (location != null && location.getAccuracy() < request.accuracy.value && location.getTime() > lastTime)
 			{
-				if (location.getTime() > lastTime)
-				{
-					latestLocation = location;
-					lastTime = location.getTime();
-				}
+				latestLocation = location;
+				lastTime = location.getTime();
 			}
 		}
 
@@ -82,17 +78,12 @@ public class LegacyLocationProvider implements LocationProvider
 		if (request.useCache)
 		{
 			Location lastKnownUserLocation = getLastKnownLocation(request);
-
-			// Check if last known location is valid
-			if (lastKnownUserLocation != null && System.currentTimeMillis() - lastKnownUserLocation.getTime() < request.cacheExpiry)
+			if (lastKnownUserLocation != null)
 			{
-				if (lastKnownUserLocation.getAccuracy() < request.accuracy.value)
+				if (listener != null)
 				{
-					if (listener != null)
-					{
-						listener.onUpdate(lastKnownUserLocation);
-						return null;
-					}
+					listener.onUpdate(lastKnownUserLocation);
+					return null;
 				}
 			}
 		}
