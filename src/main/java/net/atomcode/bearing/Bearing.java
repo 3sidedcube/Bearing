@@ -79,15 +79,6 @@ public class Bearing
 			// Ignore
 		}
 
-		try
-		{
-			if (lm.isProviderEnabled(LocationManager.PASSIVE_PROVIDER)) return true;
-		}
-		catch(Exception ex)
-		{
-			// Ignore
-		}
-
 		return false;
 	}
 
