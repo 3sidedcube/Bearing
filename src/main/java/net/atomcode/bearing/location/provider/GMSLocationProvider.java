@@ -45,11 +45,14 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	@Override
 	public void create(Context context)
 	{
-		apiClient = new GoogleApiClient.Builder(context)
-				.addConnectionCallbacks(this)
-				.addOnConnectionFailedListener(this)
-				.addApi(LocationServices.API)
-				.build();
+		if (apiClient == null)
+		{
+			apiClient = new GoogleApiClient.Builder(context)
+					.addConnectionCallbacks(this)
+					.addOnConnectionFailedListener(this)
+					.addApi(LocationServices.API)
+					.build();
+		}
 	}
 
 	@Override
