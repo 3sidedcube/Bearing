@@ -34,13 +34,11 @@ public class LegacyLocationProvider implements LocationProvider
 
 	private LocationManager locationManager;
 
-	private Map<String, android.location.LocationListener> runningRequests;
+	private Map<String, android.location.LocationListener> runningRequests = new HashMap<>();
 
 	@Override public void create(Context context)
 	{
 		locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-
-		runningRequests = new HashMap<String, android.location.LocationListener>();
 	}
 
 	@Override public void destroy()

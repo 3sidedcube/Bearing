@@ -38,15 +38,13 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 
 	private GoogleApiClient apiClient;
 
-	private HashMap<String, Runnable> pendingRequests;
-	private Map<String, com.google.android.gms.location.LocationListener> runningRequests;
+	private Map<String, Runnable> pendingRequests = new HashMap<>();
+	private Map<String, com.google.android.gms.location.LocationListener> runningRequests = new HashMap<>();
 	private Location lastLocation;
 
 	@Override
 	public void create(Context context)
 	{
-		pendingRequests = new HashMap<>();
-		runningRequests = new HashMap<>();
 		apiClient = new GoogleApiClient.Builder(context)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
