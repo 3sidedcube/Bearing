@@ -11,7 +11,6 @@ import net.atomcode.bearing.location.LocationListener;
 import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -185,7 +184,8 @@ public class LegacyLocationProvider implements LocationProvider
 		});
 
 		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId));
-		return null;
+		// TODO: This call is ignoring the trackingDisplacement field
+		return requestId;
 	}
 
 	@Override
