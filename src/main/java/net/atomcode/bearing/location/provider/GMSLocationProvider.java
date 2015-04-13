@@ -79,23 +79,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	public String requestSingleLocationUpdate(final LocationProviderRequest request, final LocationListener listener)
 	{
 		final String requestId = UUID.randomUUID().toString();
-
-		if (!apiClient.isConnected())
-		{
-			pendingRequests.put(requestId, new Runnable()
-			{
-				@Override public void run()
-				{
-					internalRequestSingleUpdate(requestId, request, listener);
-				}
-			});
-			apiClient.connect();
-		}
-		else
-		{
-			internalRequestSingleUpdate(requestId, request, listener);
-		}
-
+		internalRequestSingleUpdate(requestId, request, listener);
 		return requestId;
 	}
 
@@ -103,21 +87,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
 	{
 		final String requestId = UUID.randomUUID().toString();
-
-		if (!apiClient.isConnected())
-		{
-			pendingRequests.put(requestId, new Runnable() {
-				@Override public void run()
-				{
-					internalRequestRecurringUpdates(requestId, request, listener);
-				}
-			});
-			apiClient.connect();
-		}
-		else
-		{
-			internalRequestRecurringUpdates(requestId, request, listener);
-		}
+		internalRequestRecurringUpdates(requestId, request, listener);
 		return requestId;
 	}
 
