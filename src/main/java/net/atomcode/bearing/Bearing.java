@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -80,6 +81,16 @@ public class Bearing
 		}
 
 		return false;
+	}
+
+	private static final boolean LOG = false;
+
+	public static void log(String requestId, String s)
+	{
+		if (LOG)
+		{
+			Log.d("Bearing", "[" + requestId + "] " +  s);
+		}
 	}
 
 	/**

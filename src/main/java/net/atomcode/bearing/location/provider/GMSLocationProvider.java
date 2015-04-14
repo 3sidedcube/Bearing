@@ -3,13 +3,13 @@ package net.atomcode.bearing.location.provider;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
-import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
+import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.location.LocationListener;
 import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
@@ -23,8 +23,6 @@ import java.util.UUID;
  */
 public class GMSLocationProvider implements LocationProvider, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener
 {
-	private static final boolean LOG = false;
-
 	private static GMSLocationProvider instance;
 
 	public static GMSLocationProvider getInstance()
@@ -119,65 +117,58 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	 */
 	private void internalRequestRecurringUpdates(final String requestId, final LocationProviderRequest request, final LocationListener listener)
 	{
-		final LocationRequest gmsRequest = getRecurringLocationRequestForBearingRequest(request);
-
-		runningRequests.put(requestId, new com.google.android.gms.location.LocationListener()
-		{
-			private long lastReportedTimestamp = -1;
-			private Location lastReportedLocation;
-
-			@Override public void onLocationChanged(Location location)
-			{
-				long currentTimestamp = System.currentTimeMillis() / 1000;
-				long timeSinceLastReport = currentTimestamp - lastReportedTimestamp;
-
-				if (LOG)
-				{
-					Log.d("Bearing Location Tracker", "onLocationChanged last reported: " + timeSinceLastReport + " seconds ago (Fallback at " + request.trackingFallback / 1000 + ")");
-				}
-
-				if (lastReportedTimestamp == -1 || timeSinceLastReport > (request.trackingFallback / 1000))
-				{
-					if (LOG)
-					{
-						Log.d("Bearing Location Tracker", "Tracking fallback, forcing update");
-					}
-					lastReportedLocation = location;
-					lastReportedTimestamp = currentTimestamp;
-
-					// Force report
-					if (listener != null)
-					{
-						listener.onUpdate(location);
-					}
-					return;
-				}
-
-				if (request.trackingDisplacement != -1 && location.distanceTo(lastReportedLocation) > request.trackingDisplacement)
-				{
-					lastReportedLocation = location;
-					lastReportedTimestamp = currentTimestamp;
-
-					if (listener != null)
-					{
-						listener.onUpdate(location);
-					}
-				}
-			}
-		});
-
 		if (apiClient.isConnected())
 		{
+			final LocationRequest gmsRequest = getRecurringLocationRequestForBearingRequest(request);
+
+			runningRequests.put(requestId, new com.google.android.gms.location.LocationListener()
+			{
+				private long lastReportedTimestamp = -1;
+				private Location lastReportedLocation;
+
+				@Override public void onLocationChanged(Location location)
+				{
+					long currentTimestamp = System.currentTimeMillis() / 1000;
+					long timeSinceLastReport = currentTimestamp - lastReportedTimestamp;
+
+					Bearing.log(requestId, "onLocationChanged last reported: " + timeSinceLastReport + " seconds ago (Fallback at " + request.trackingFallback / 1000 + ")");
+
+					if (lastReportedTimestamp == -1 || timeSinceLastReport > (request.trackingFallback / 1000))
+					{
+						Bearing.log(requestId, "Tracking fallback, forcing update");
+						lastReportedLocation = location;
+						lastReportedTimestamp = currentTimestamp;
+
+						// Force report
+						if (listener != null)
+						{
+							listener.onUpdate(location);
+						}
+						return;
+					}
+
+					if (request.trackingDisplacement != -1 && location.distanceTo(lastReportedLocation) > request.trackingDisplacement)
+					{
+						lastReportedLocation = location;
+						lastReportedTimestamp = currentTimestamp;
+
+						if (listener != null)
+						{
+							listener.onUpdate(location);
+						}
+					}
+				}
+			});
+
 			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
 		}
 		else
 		{
-			final String connectRequestId = UUID.randomUUID().toString();
-			pendingRequests.put(connectRequestId, new Runnable()
+			pendingRequests.put(requestId, new Runnable()
 			{
 				@Override public void run()
 				{
-					LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
+					internalRequestRecurringUpdates(requestId, request, listener);
 				}
 			});
 		}
@@ -215,26 +206,6 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	 */
 	private void internalRequestSingleUpdate(final String requestId, final LocationProviderRequest request, final LocationListener listener)
 	{
-		LocationRequest gmsRequest = getSingleLocationRequestForBearingRequest(request);
-
-		runningRequests.put(requestId, new com.google.android.gms.location.LocationListener()
-		{
-			@Override public void onLocationChanged(Location location)
-			{
-				if (listener != null)
-				{
-					listener.onUpdate(location);
-				}
-
-				runningRequests.remove(requestId);
-
-				if (runningRequests.size() == 0)
-				{
-					apiClient.disconnect();
-				}
-			}
-		});
-
 		if (apiClient.isConnected())
 		{
 			if (request.useCache)
@@ -254,7 +225,27 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 					}
 				}
 			}
-			
+
+			LocationRequest gmsRequest = getSingleLocationRequestForBearingRequest(request);
+
+			runningRequests.put(requestId, new com.google.android.gms.location.LocationListener()
+			{
+				@Override public void onLocationChanged(Location location)
+				{
+					if (listener != null)
+					{
+						listener.onUpdate(location);
+					}
+
+					runningRequests.remove(requestId);
+
+					if (runningRequests.size() == 0)
+					{
+						apiClient.disconnect();
+					}
+				}
+			});
+
 			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
 		}
 		else

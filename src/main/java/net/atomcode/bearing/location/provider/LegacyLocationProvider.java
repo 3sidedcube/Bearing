@@ -7,6 +7,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 
+import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.location.LocationListener;
 import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
@@ -74,11 +75,13 @@ public class LegacyLocationProvider implements LocationProvider
 	{
 		if (request.useCache)
 		{
+			Bearing.log("pending", "LEGACY: Checking for cached locations...");
 			Location lastKnownUserLocation = getLastKnownLocation(request);
 			if (lastKnownUserLocation != null)
 			{
 				if (listener != null)
 				{
+					Bearing.log("pending", "LEGACY: Got cached location: " + lastKnownUserLocation);
 					listener.onUpdate(lastKnownUserLocation);
 					return null;
 				}
@@ -91,6 +94,8 @@ public class LegacyLocationProvider implements LocationProvider
 		{
 			@Override public void onLocationChanged(Location location)
 			{
+				Bearing.log(requestId, "LEGACY: Location changed to " + location);
+
 				if (listener != null)
 				{
 					listener.onUpdate(location);
@@ -101,24 +106,26 @@ public class LegacyLocationProvider implements LocationProvider
 
 			@Override public void onStatusChanged(String provider, int status, Bundle extras)
 			{
-
+				Bearing.log(requestId, "LEGACY: Status changed for " + provider + ": " + status);
 			}
 
 			@Override public void onProviderEnabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Enabled " + provider);
 			}
 
 			@Override public void onProviderDisabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Disabled " + provider);
 			}
 		});
 
 		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
+
+		Bearing.log(requestId, "LEGACY: Request location update from " + bestProvider);
 		locationManager.requestSingleUpdate(bestProvider, runningRequests.get(requestId), Looper.getMainLooper());
-		
+
 		return requestId;
 	}
 
