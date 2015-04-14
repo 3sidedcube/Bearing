@@ -3,6 +3,7 @@ package net.atomcode.bearing.location.provider;
 import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -160,7 +161,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 				}
 			});
 
-			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
+			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId), Looper.getMainLooper());
 		}
 		else
 		{
@@ -251,7 +252,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 			});
 
 			Bearing.log(requestId, "GMS: Request location update within " + request.fallbackTimeout + "ms");
-			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
+			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId), Looper.getMainLooper());
 		}
 		else
 		{
