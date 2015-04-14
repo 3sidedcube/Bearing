@@ -121,10 +121,9 @@ public class LegacyLocationProvider implements LocationProvider
 		});
 
 		Criteria criteria = getCriteriaFromRequest(request);
-		String bestProvider = locationManager.getBestProvider(criteria, true);
 
-		Bearing.log(requestId, "LEGACY: Request location update from " + bestProvider + " within " + request.fallbackTimeout + "ms");
-		locationManager.requestSingleUpdate(bestProvider, runningRequests.get(requestId), Looper.getMainLooper());
+		Bearing.log(requestId, "LEGACY: Request location update using " + criteria + " within " + request.fallbackTimeout + "ms");
+		locationManager.requestSingleUpdate(criteria, runningRequests.get(requestId), Looper.getMainLooper());
 
 		return requestId;
 	}
@@ -163,6 +162,12 @@ public class LegacyLocationProvider implements LocationProvider
 
 		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
+
+		if (bestProvider == null)
+		{
+			listener.onFailure();
+			return null;
+		}
 
 		runningRequests.put(requestId, new android.location.LocationListener()
 		{
