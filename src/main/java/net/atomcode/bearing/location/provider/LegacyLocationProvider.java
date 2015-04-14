@@ -164,6 +164,12 @@ public class LegacyLocationProvider implements LocationProvider
 		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
 
+		if (bestProvider == null)
+		{
+			listener.onFailure();
+			return null;
+		}
+
 		runningRequests.put(requestId, new android.location.LocationListener()
 		{
 			@Override public void onLocationChanged(Location location)
