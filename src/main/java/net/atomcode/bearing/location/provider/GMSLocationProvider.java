@@ -210,6 +210,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		{
 			if (request.useCache)
 			{
+				Bearing.log("pending", "GMS: Checking for cached locations...");
 				Location lastKnownUserLocation = getLastKnownLocation(request);
 
 				// Check if last known location is valid
@@ -222,6 +223,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 							listener.onUpdate(lastKnownUserLocation);
 							return;
 						}
+						Bearing.log("pending", "GMS: Got cached location: " + lastKnownUserLocation);
 					}
 				}
 			}
