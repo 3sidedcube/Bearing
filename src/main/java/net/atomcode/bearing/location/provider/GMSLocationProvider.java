@@ -232,6 +232,8 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 			{
 				@Override public void onLocationChanged(Location location)
 				{
+					Bearing.log(requestId, "GMS: Location changed to " + location);
+
 					if (listener != null)
 					{
 						listener.onUpdate(location);
@@ -246,6 +248,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 				}
 			});
 
+			Bearing.log(requestId, "GMS: Request location update within " + request.fallbackTimeout + "ms");
 			LocationServices.FusedLocationApi.requestLocationUpdates(apiClient, gmsRequest, runningRequests.get(requestId));
 		}
 		else

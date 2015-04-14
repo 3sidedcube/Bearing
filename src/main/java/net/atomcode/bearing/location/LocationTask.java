@@ -8,6 +8,7 @@ import android.os.Looper;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 
+import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.BearingTask;
 import net.atomcode.bearing.location.provider.GMSLocationProvider;
 import net.atomcode.bearing.location.provider.LegacyLocationProvider;
@@ -64,6 +65,7 @@ public abstract class LocationTask implements BearingTask
 				{
 					if (isRunning())
 					{
+						Bearing.log(taskId, "Cancel task due to timeout");
 						LocationTask.this.cancel();
 						if (listener != null)
 						{

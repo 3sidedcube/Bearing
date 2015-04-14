@@ -123,7 +123,7 @@ public class LegacyLocationProvider implements LocationProvider
 		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
 
-		Bearing.log(requestId, "LEGACY: Request location update from " + bestProvider);
+		Bearing.log(requestId, "LEGACY: Request location update from " + bestProvider + " within " + request.fallbackTimeout + "ms");
 		locationManager.requestSingleUpdate(bestProvider, runningRequests.get(requestId), Looper.getMainLooper());
 
 		return requestId;
@@ -159,7 +159,7 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
 	{
-		String requestId = UUID.randomUUID().toString();
+		final String requestId = UUID.randomUUID().toString();
 
 		Criteria criteria = getCriteriaFromRequest(request);
 		String bestProvider = locationManager.getBestProvider(criteria, true);
@@ -168,6 +168,7 @@ public class LegacyLocationProvider implements LocationProvider
 		{
 			@Override public void onLocationChanged(Location location)
 			{
+				Bearing.log(requestId, "LEGACY: Location changed to " + location);
 				if (listener != null)
 				{
 					listener.onUpdate(location);
@@ -176,20 +177,21 @@ public class LegacyLocationProvider implements LocationProvider
 
 			@Override public void onStatusChanged(String provider, int status, Bundle extras)
 			{
-
+				Bearing.log(requestId, "LEGACY: Status changed for " + provider + ": " + status);
 			}
 
 			@Override public void onProviderEnabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Enabled " + provider);
 			}
 
 			@Override public void onProviderDisabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Disabled " + provider);
 			}
 		});
 
+		Bearing.log(requestId, "LEGACY: Request recurring updates from " + bestProvider + " every " + request.trackingRate + "ms");
 		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId));
 		// TODO: This call is ignoring the trackingDisplacement field
 		return requestId;
@@ -198,6 +200,7 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public void cancelUpdates(String requestId)
 	{
+		Bearing.log(requestId, "LEGACY: Cancel task");
 		if (runningRequests.containsKey(requestId))
 		{
 			locationManager.removeUpdates(runningRequests.get(requestId));
