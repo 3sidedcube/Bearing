@@ -5,6 +5,9 @@ import android.location.Location;
 import android.os.Handler;
 import android.os.Looper;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
 import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.BearingTask;
 import net.atomcode.bearing.location.provider.GMSLocationProvider;
@@ -18,35 +21,27 @@ import java.util.TimerTask;
  */
 public abstract class LocationTask implements BearingTask
 {
-	/**
-	 * Use a cached location when a timeout occurs
-	 */
-	public static final int FALLBACK_CACHE = 0x1;
-
-	protected boolean isUsingLegacyServices;
-
 	protected LocationProvider locationProvider;
 	protected LocationProviderRequest request;
 
 	protected LocationListener listener;
 
-	protected int fallback = FALLBACK_NONE; // No fallback by default
-	protected long timeout = 0; // > 0 means no timeout
 	protected boolean running = false;
 
 	protected String taskId;
 
 	public LocationTask(Context context)
 	{
-		isUsingLegacyServices = !Bearing.isLocationServicesAvailable(context);
-		if (isUsingLegacyServices)
-		{
-			locationProvider = LegacyLocationProvider.getInstance();
-		}
-		else
+		int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(context);
+		if (resultCode == ConnectionResult.SUCCESS)
 		{
 			locationProvider = GMSLocationProvider.getInstance();
 		}
+		else
+		{
+			locationProvider = LegacyLocationProvider.getInstance();
+		}
+
 		locationProvider.create(context);
 
 		request = new LocationProviderRequest();
@@ -61,7 +56,7 @@ public abstract class LocationTask implements BearingTask
 	public BearingTask start()
 	{
 		running = true;
-		if (timeout > 0)
+		if (request.fallbackTimeout > 0)
 		{
 			new Timer().schedule(new TimerTask()
 			{
@@ -70,6 +65,7 @@ public abstract class LocationTask implements BearingTask
 				{
 					if (isRunning())
 					{
+						Bearing.log(taskId, "Cancel task due to timeout");
 						LocationTask.this.cancel();
 						if (listener != null)
 						{
@@ -78,7 +74,7 @@ public abstract class LocationTask implements BearingTask
 						}
 					}
 				}
-			}, timeout);
+			}, request.fallbackTimeout);
 		}
 
 		return this;
@@ -144,8 +140,8 @@ public abstract class LocationTask implements BearingTask
 	@Override
 	public LocationTask fallback(int fallback, long timeout)
 	{
-		this.fallback = fallback;
-		this.timeout = timeout;
+		request.fallback = fallback;
+		request.fallbackTimeout = timeout;
 		return this;
 	}
 
@@ -165,7 +161,7 @@ public abstract class LocationTask implements BearingTask
 		{
 			@Override public void run()
 			{
-				if (fallback == FALLBACK_CACHE)
+				if (request.fallback == LocationProviderRequest.FALLBACK_CACHE)
 				{
 					Location cachedLocation = locationProvider.getLastKnownLocation(request);
 					if (cachedLocation != null)

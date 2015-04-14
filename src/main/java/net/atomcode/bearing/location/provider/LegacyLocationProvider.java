@@ -7,6 +7,7 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Looper;
 
+import net.atomcode.bearing.Bearing;
 import net.atomcode.bearing.location.LocationListener;
 import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
@@ -33,13 +34,11 @@ public class LegacyLocationProvider implements LocationProvider
 
 	private LocationManager locationManager;
 
-	private Map<String, android.location.LocationListener> runningRequests;
+	private Map<String, android.location.LocationListener> runningRequests = new HashMap<>();
 
 	@Override public void create(Context context)
 	{
 		locationManager = (LocationManager)context.getSystemService(Context.LOCATION_SERVICE);
-
-		runningRequests = new HashMap<String, android.location.LocationListener>();
 	}
 
 	@Override public void destroy()
@@ -54,30 +53,37 @@ public class LegacyLocationProvider implements LocationProvider
 	@Override
 	public Location getLastKnownLocation(LocationProviderRequest request)
 	{
-		String provider = getProviderForRequest(request);
-		return locationManager.getLastKnownLocation(provider);
+		long lastTime = System.currentTimeMillis() - request.cacheExpiry;
+		Location latestLocation = null;
+
+		for (String provider : locationManager.getProviders(true))
+		{
+			Location location = locationManager.getLastKnownLocation(provider);
+
+			if (location != null && location.getAccuracy() < request.accuracy.value && location.getTime() > lastTime)
+			{
+				latestLocation = location;
+				lastTime = location.getTime();
+			}
+		}
+
+		return latestLocation;
 	}
 
 	@Override
 	public String requestSingleLocationUpdate(LocationProviderRequest request, final LocationListener listener)
 	{
-		String provider = getProviderForRequest(request);
-
 		if (request.useCache)
 		{
-			Location lastKnownUserLocation = locationManager.getLastKnownLocation(provider);
-
-			// Check if last known location is valid
-			if (lastKnownUserLocation != null &&
-					System.currentTimeMillis() - lastKnownUserLocation.getTime() < request.cacheExpiry)
+			Bearing.log("pending", "LEGACY: Checking for cached locations...");
+			Location lastKnownUserLocation = getLastKnownLocation(request);
+			if (lastKnownUserLocation != null)
 			{
-				if (lastKnownUserLocation.getAccuracy() < request.accuracy.value)
+				if (listener != null)
 				{
-					if (listener != null)
-					{
-						listener.onUpdate(lastKnownUserLocation);
-						return null;
-					}
+					Bearing.log("pending", "LEGACY: Got cached location: " + lastKnownUserLocation);
+					listener.onUpdate(lastKnownUserLocation);
+					return null;
 				}
 			}
 		}
@@ -88,39 +94,43 @@ public class LegacyLocationProvider implements LocationProvider
 		{
 			@Override public void onLocationChanged(Location location)
 			{
+				Bearing.log(requestId, "LEGACY: Location changed to " + location);
+
 				if (listener != null)
 				{
 					listener.onUpdate(location);
 				}
+
 				runningRequests.remove(requestId);
 			}
 
 			@Override public void onStatusChanged(String provider, int status, Bundle extras)
 			{
-
+				Bearing.log(requestId, "LEGACY: Status changed for " + provider + ": " + status);
 			}
 
 			@Override public void onProviderEnabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Enabled " + provider);
 			}
 
 			@Override public void onProviderDisabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Disabled " + provider);
 			}
 		});
 
-		locationManager.requestSingleUpdate(provider, runningRequests.get(requestId), Looper.getMainLooper());
+		Criteria criteria = getCriteriaFromRequest(request);
+		String bestProvider = locationManager.getBestProvider(criteria, true);
+
+		Bearing.log(requestId, "LEGACY: Request location update from " + bestProvider + " within " + request.fallbackTimeout + "ms");
+		locationManager.requestSingleUpdate(bestProvider, runningRequests.get(requestId), Looper.getMainLooper());
 
 		return requestId;
 	}
 
-	@Override
-	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
+	private Criteria getCriteriaFromRequest(LocationProviderRequest request)
 	{
-		String requestId = UUID.randomUUID().toString();
-
 		int powerCriteria = Criteria.POWER_LOW;
 		int accuracyCriteria = Criteria.ACCURACY_MEDIUM;
 
@@ -143,12 +153,22 @@ public class LegacyLocationProvider implements LocationProvider
 		criteria.setPowerRequirement(powerCriteria);
 		criteria.setAccuracy(accuracyCriteria);
 
-		String bestProvider = locationManager.getBestProvider(criteria, false);
+		return criteria;
+	}
+
+	@Override
+	public String requestRecurringLocationUpdates(final LocationProviderRequest request, final LocationListener listener)
+	{
+		final String requestId = UUID.randomUUID().toString();
+
+		Criteria criteria = getCriteriaFromRequest(request);
+		String bestProvider = locationManager.getBestProvider(criteria, true);
 
 		runningRequests.put(requestId, new android.location.LocationListener()
 		{
 			@Override public void onLocationChanged(Location location)
 			{
+				Bearing.log(requestId, "LEGACY: Location changed to " + location);
 				if (listener != null)
 				{
 					listener.onUpdate(location);
@@ -157,58 +177,35 @@ public class LegacyLocationProvider implements LocationProvider
 
 			@Override public void onStatusChanged(String provider, int status, Bundle extras)
 			{
-
+				Bearing.log(requestId, "LEGACY: Status changed for " + provider + ": " + status);
 			}
 
 			@Override public void onProviderEnabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Enabled " + provider);
 			}
 
 			@Override public void onProviderDisabled(String provider)
 			{
-
+				Bearing.log(requestId, "LEGACY: Disabled " + provider);
 			}
 		});
 
+		Bearing.log(requestId, "LEGACY: Request recurring updates from " + bestProvider + " every " + request.trackingRate + "ms");
 		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId));
-		return null;
+		// TODO: This call is ignoring the trackingDisplacement field
+		return requestId;
 	}
 
 	@Override
 	public void cancelUpdates(String requestId)
 	{
+		Bearing.log(requestId, "LEGACY: Cancel task");
 		if (runningRequests.containsKey(requestId))
 		{
 			locationManager.removeUpdates(runningRequests.get(requestId));
 			runningRequests.remove(requestId);
 		}
-	}
-
-	/**
-	 * Get the provider for the given request
-	 */
-	private String getProviderForRequest(LocationProviderRequest request)
-	{
-		String provider = null;
-		switch (request.accuracy)
-		{
-			case LOW:
-				provider = LocationManager.PASSIVE_PROVIDER;
-				if (locationManager.isProviderEnabled(provider))
-				{
-					break;
-				}
-			case MEDIUM:
-				provider = LocationManager.NETWORK_PROVIDER;
-				if (locationManager.isProviderEnabled(provider))
-				{
-					break;
-				}
-			case HIGH:
-				provider = LocationManager.GPS_PROVIDER;
-		}
-		return provider;
 	}
 
 }
