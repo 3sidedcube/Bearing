@@ -197,7 +197,7 @@ public class LegacyLocationProvider implements LocationProvider
 		});
 
 		Bearing.log(requestId, "LEGACY: Request recurring updates from " + bestProvider + " every " + request.trackingRate + "ms");
-		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId));
+		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId), Looper.getMainLooper());
 		// TODO: This call is ignoring the trackingDisplacement field
 		return requestId;
 	}
