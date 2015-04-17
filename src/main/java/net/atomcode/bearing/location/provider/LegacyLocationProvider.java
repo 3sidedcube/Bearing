@@ -47,6 +47,7 @@ public class LegacyLocationProvider implements LocationProvider
 		{
 			locationManager.removeUpdates(runningRequest);
 		}
+
 		runningRequests.clear();
 	}
 
@@ -123,7 +124,25 @@ public class LegacyLocationProvider implements LocationProvider
 		Criteria criteria = getCriteriaFromRequest(request);
 
 		Bearing.log(requestId, "LEGACY: Request location update using " + criteria + " within " + request.fallbackTimeout + "ms");
-		locationManager.requestSingleUpdate(criteria, runningRequests.get(requestId), Looper.getMainLooper());
+
+		try
+		{
+			locationManager.requestSingleUpdate(criteria, runningRequests.get(requestId), Looper.getMainLooper());
+		}
+		catch (Exception ignore)
+		{
+			Bearing.log(requestId, "There was a problem with the criteria : " + criteria);
+
+			// Criteria trying to use a provider that's not available and this causes a crash on
+			// certain devices.
+
+			runningRequests.remove(requestId);
+
+			if (listener != null)
+			{
+				listener.onFailure();
+			}
+		}
 
 		return requestId;
 	}
@@ -160,15 +179,6 @@ public class LegacyLocationProvider implements LocationProvider
 	{
 		final String requestId = UUID.randomUUID().toString();
 
-		Criteria criteria = getCriteriaFromRequest(request);
-		String bestProvider = locationManager.getBestProvider(criteria, true);
-
-		if (bestProvider == null)
-		{
-			listener.onFailure();
-			return null;
-		}
-
 		runningRequests.put(requestId, new android.location.LocationListener()
 		{
 			@Override public void onLocationChanged(Location location)
@@ -196,9 +206,46 @@ public class LegacyLocationProvider implements LocationProvider
 			}
 		});
 
-		Bearing.log(requestId, "LEGACY: Request recurring updates from " + bestProvider + " every " + request.trackingRate + "ms");
-		locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId), Looper.getMainLooper());
+		String bestProvider = "";
+
+		try
+		{
+			Criteria criteria = getCriteriaFromRequest(request);
+
+			if (criteria == null)
+			{
+				listener.onFailure();
+				return null;
+			}
+
+			bestProvider = locationManager.getBestProvider(criteria, true);
+
+			if (bestProvider == null)
+			{
+				listener.onFailure();
+				return null;
+			}
+
+			Bearing.log(requestId, "LEGACY: Request recurring updates from " + bestProvider + " every " + request.trackingRate + "ms");
+			locationManager.requestLocationUpdates(bestProvider, request.trackingRate, 0, runningRequests.get(requestId), Looper.getMainLooper());
+		}
+		catch (Exception ignore)
+		{
+			Bearing.log(requestId, "There was a problem with the provider : " + bestProvider);
+
+			// Criteria trying to use a provider that's not available and this causes a crash on
+			// certain devices.
+
+			runningRequests.remove(requestId);
+
+			if (listener != null)
+			{
+				listener.onFailure();
+			}
+		}
+
 		// TODO: This call is ignoring the trackingDisplacement field
+
 		return requestId;
 	}
 
