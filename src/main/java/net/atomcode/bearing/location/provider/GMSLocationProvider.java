@@ -172,6 +172,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 					internalRequestRecurringUpdates(requestId, request, listener);
 				}
 			});
+			apiClient.connect();
 		}
 	}
 
