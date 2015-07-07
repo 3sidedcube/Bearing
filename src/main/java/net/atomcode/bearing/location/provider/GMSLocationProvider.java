@@ -243,12 +243,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 						listener.onUpdate(location);
 					}
 
-					runningRequests.remove(requestId);
-
-					if (runningRequests.size() == 0)
-					{
-						apiClient.disconnect();
-					}
+					cancelUpdates(requestId);
 				}
 			});
 
@@ -276,7 +271,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		LocationRequest gmsRequest = new LocationRequest();
 		gmsRequest.setNumUpdates(1); // Single update
 		gmsRequest.setExpirationDuration(request.fallbackTimeout);
-		gmsRequest.setInterval(request.fallbackTimeout);
+		gmsRequest.setInterval(0);
 		int priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
 		switch (request.accuracy)
 		{

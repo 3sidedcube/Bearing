@@ -21,7 +21,7 @@ public class LocationProviderRequest
 	 * Fallback
 	 */
 	public int fallback = FALLBACK_NONE;
-	public long fallbackTimeout = 0;
+	public long fallbackTimeout = 10000;
 
 	/*
 	 * Cache
