@@ -276,7 +276,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		LocationRequest gmsRequest = new LocationRequest();
 		gmsRequest.setNumUpdates(1); // Single update
 		gmsRequest.setExpirationDuration(request.fallbackTimeout);
-		gmsRequest.setInterval(request.fallbackTimeout);
+		gmsRequest.setInterval(0);
 		int priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY;
 		switch (request.accuracy)
 		{
