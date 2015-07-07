@@ -243,12 +243,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 						listener.onUpdate(location);
 					}
 
-					runningRequests.remove(requestId);
-
-					if (runningRequests.size() == 0)
-					{
-						apiClient.disconnect();
-					}
+					cancelUpdates(requestId);
 				}
 			});
 
