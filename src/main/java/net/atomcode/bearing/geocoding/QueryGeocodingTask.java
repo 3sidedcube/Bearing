@@ -3,6 +3,7 @@ package net.atomcode.bearing.geocoding;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
+import android.text.TextUtils;
 import android.util.Log;
 
 import org.apache.http.HttpResponse;
@@ -179,13 +180,19 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 					address.setLatitude(locationData.getDouble("lat"));
 					address.setLongitude(locationData.getDouble("lng"));
 
-					// Temporary fix. TODO: Proper parsing.
-					address.setAddressLine(0, result.getString("formatted_address"));
+					String[] addressParts = TextUtils.split(result.getString("formatted_address"), ", ");
+					int addressIndex = 0;
+					for (String addressPart: addressParts)
+					{
+						address.setAddressLine(addressIndex, addressPart);
+						++addressIndex;
+					}
+
 					JSONArray addressComponents = result.getJSONArray("address_components");
 					for (int componentIndex = 0; componentIndex < addressComponents.length(); componentIndex++)
 					{
 						JSONObject component = addressComponents.getJSONObject(componentIndex);
-						address.setAddressLine(componentIndex + 1, component.getString("short_name"));
+						populateAddressFromGoogleMapComponent(address, component);
 					}
 
 					addressList.add(address);
@@ -200,5 +207,85 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 		}
 
 		return null;
+	}
+
+	private void populateAddressFromGoogleMapComponent(Address address, JSONObject component) throws JSONException
+	{
+		String componentLongName = component.getString("long_name");
+		String componentShortName = component.getString("long_name");
+		JSONArray componentTypes = component.getJSONArray("types");
+		for (int typeIndex = 0; typeIndex < componentTypes.length(); typeIndex++)
+		{
+			String typeText = componentTypes.getString(typeIndex);
+			switch (typeText)
+			{
+				case "country":
+				{
+					address.setCountryName(componentLongName);
+					address.setCountryCode(componentShortName);
+					break;
+				}
+				case "route":
+				{
+					address.setThoroughfare(componentLongName);
+					break;
+				}
+				case "administrative_area_level_1":
+				{
+					address.setAdminArea(componentLongName);
+					break;
+				}
+				case "administrative_area_level_2":
+				{
+					address.setSubAdminArea(componentLongName);
+					break;
+				}
+				case "locality":
+				case "ward":
+				{
+					address.setLocality(componentLongName);
+					break;
+				}
+				case "sublocality":
+				{
+					address.setSubLocality(componentLongName);
+					break;
+				}
+				case "neighborhood":
+				{
+					if (address.getSubLocality() == null) address.setSubLocality(componentLongName);
+					break;
+				}
+				case "premise":
+				{
+					address.setPremises(componentLongName);
+					break;
+				}
+				case "postal_code":
+				{
+					address.setPostalCode(componentLongName);
+					break;
+				}
+				case "natural_feature":
+				case "airport":
+				case "park":
+				case "point_of_interest":
+				case "intersection":
+				{
+					address.setFeatureName(componentLongName);
+					break;
+				}
+				case "administrative_area_level_3":
+				case "administrative_area_level_4":
+				case "administrative_area_level_5":
+				case "subpremise":
+				case "street_number":
+				case "political":
+				case "colloquial_area":
+				{
+					break;
+				}
+			}
+		}
 	}
 }
