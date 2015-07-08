@@ -5,20 +5,9 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.util.Log;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -109,136 +98,7 @@ public class ReverseGeocodingTask extends GeocodingTask<Double>
 	 */
 	private List<Address> addressForRemoteGeocodedQuery(Double latitude, Double longitude)
 	{
-		StringBuilder data = new StringBuilder();
-		try
-		{
-			HttpClient client = new DefaultHttpClient();
-
-			String params = "?latlng=" + latitude + "," + longitude + "&sensor=false";
-
-			HttpGet request = new HttpGet(WEB_API_URL + params);
-
-			HttpResponse response;
-			try
-			{
-				response = client.execute(request);
-			}
-			catch (ClientProtocolException ex)
-			{
-				ex.printStackTrace();
-				return null;
-			}
-
-			InputStream content = response.getEntity().getContent();
-
-			InputStreamReader inputStreamReader = new InputStreamReader(content);
-			BufferedReader reader = new BufferedReader(inputStreamReader);
-
-			String line;
-			while ((line = reader.readLine()) != null)
-			{
-				data.append(line);
-			}
-		}
-		catch (IOException ex)
-		{
-			Log.e("Bearing", "Network error connecting to Google Geocoding API" + ex.getMessage());
-			return null;
-		}
-
-		try
-		{
-			/*
-			{
-				"results": [
-					{
-						"geometry": {
-							"location": {
-								"lat": <latitude>
-								"lng": <longitude>
-							}
-						}
-					}
-				]
-			}
-			 */
-			JSONObject geocodeData = new JSONObject(data.toString());
-
-			JSONArray addresses = geocodeData.getJSONArray("results");
-
-			int resultsToRead = Math.min(resultCount, addresses.length());
-
-			List<Address> addressList = new ArrayList<Address>(resultsToRead);
-			for (int i = 0; i < resultsToRead; i++)
-			{
-				JSONObject firstResult = addresses.getJSONObject(0);
-
-				JSONObject geometry = firstResult.getJSONObject("geometry");
-				JSONObject locationData = geometry.getJSONObject("location");
-
-				Address result = new Address(locale);
-				result.setLatitude(locationData.getDouble("lat"));
-				result.setLongitude(locationData.getDouble("lng"));
-
-				JSONArray addressData = firstResult.getJSONArray("address_components");
-
-				for (int addressIndex = 0; addressIndex < addressData.length(); addressIndex++)
-				{
-					JSONObject addressLine = addressData.getJSONObject(addressIndex);
-
-					String addressLineString = addressLine.getString("long_name");
-					result.setAddressLine(addressIndex, addressLineString);
-
-					JSONArray types = addressLine.getJSONArray("types");
-					for (int typeIter = 0; typeIter < types.length(); typeIter++)
-					{
-						String type = types.getString(typeIter);
-						if (type.equals("street_number"))
-						{
-							result.setPremises(addressLineString);
-						}
-						else if (type.equals("route"))
-						{
-							result.setSubThoroughfare(addressLineString);
-						}
-						else if (type.equals("neighborhood"))
-						{
-							result.setThoroughfare(addressLineString);
-						}
-						else if (type.equals("sublocality"))
-						{
-							result.setSubLocality(addressLineString);
-						}
-						else if (type.equals("administrative_area_level_2"))
-						{
-							result.setSubAdminArea(addressLineString);
-						}
-						else if (type.equals("administrative_area_level_1"))
-						{
-							result.setAdminArea(addressLineString);
-						}
-						else if (type.equals("country"))
-						{
-							result.setCountryName(addressLineString);
-							result.setCountryCode(addressLine.getString("short_name"));
-						}
-						else if (type.equals("postal_code"))
-						{
-							result.setPostalCode(addressLineString);
-						}
-					}
-				}
-
-				addressList.add(result);
-			}
-
-			return addressList;
-		}
-		catch (JSONException ex)
-		{
-			Log.e("Bearing", "Google Geocoding API format parsing failed! " + ex.getMessage());
-		}
-
-		return null;
+		String params = "?latlng=" + latitude + "," + longitude + "&sensor=false";
+		return super.addressForRemoteGeocodedQuery(new HttpGet(WEB_API_URL + params));
 	}
 }
