@@ -10,6 +10,7 @@ public class PeriodicLocationTask extends LocationTask
 	public PeriodicLocationTask(Context context)
 	{
 		super(context);
+		request.fallbackTimeout = 0;
 	}
 
 	/**
