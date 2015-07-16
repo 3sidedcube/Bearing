@@ -50,7 +50,7 @@ android.libraryVariants.all { variant ->
         ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
         classpath = files(variant.javaCompile.classpath.files, ext.androidJar)
 
-        failOnError false        
+        failOnError false
 
         options {
             links "http://docs.oracle.com/javase/7/docs/api/"
@@ -66,5 +66,6 @@ android.libraryVariants.all { variant ->
 dependencies {
     // Explicit dependency on support lib to allow sdk-manager plugin to prepare it
     compile 'com.android.support:support-v4:21.0.3'
-    compile 'com.google.android.gms:play-services:6.5.87'
+    compile 'com.google.android.gms:play-services-base:7.5.0'
+    compile 'com.google.android.gms:play-services-location:7.5.0'
 }
