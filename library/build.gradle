@@ -1,0 +1,77 @@
+buildscript {
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		classpath 'com.android.tools.build:gradle:1.2.3'
+		classpath 'com.jakewharton.sdkmanager:gradle-plugin:0.12.0'
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'android-sdk-manager'
+apply plugin: 'com.android.library'
+
+group 'net.atomcode'
+version '2.2.6'
+
+android {
+	compileSdkVersion 21
+	buildToolsVersion "21.1.2"
+
+	defaultConfig {
+		minSdkVersion 9
+		targetSdkVersion 21
+		versionCode calculatedVersionCode()
+		versionName project.version
+	}
+}
+
+def calculatedVersionCode()
+{
+	String[] versionElements = project.version.toString().split("\\.");
+	StringBuilder builder = new StringBuilder();
+	versionElements.each { elem ->
+		builder.append(elem.format("%0" + (4 - elem.length().toInteger()) + "d", elem.toInteger()))
+	}
+
+	return Integer.valueOf(builder.toString());
+}
+
+android.libraryVariants.all { variant ->
+	def variantName = variant.name.capitalize();
+	task("generate${variantName}Javadoc", type: Javadoc) {
+		description "Generates Javadoc for the ${variantName} build"
+		source = variant.javaCompile.source
+		ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
+		classpath = files(variant.javaCompile.classpath.files, ext.androidJar)
+
+		failOnError false
+
+		options {
+			links "http://docs.oracle.com/javase/7/docs/api/"
+			linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
+			linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/extras/google/google_play_services/docs/reference"
+		}
+		exclude '**/BuildConfig.java'
+		exclude '**/R.java'
+	}
+
+	//    tasks.androidJavadocsJar.dependsOn "generate${variantName}Javadoc"
+}
+
+dependencies {
+	// Explicit dependency on support lib to allow sdk-manager plugin to prepare it
+	compile 'com.android.support:support-v4:21.0.3'
+	compile 'com.google.android.gms:play-services-base:7.5.0'
+	compile 'com.google.android.gms:play-services-location:7.5.0'
+}
+
+//apply from: '../gradle/sonatype.gradle'
+//apply from: '../gradle/artifactory.gradle'
