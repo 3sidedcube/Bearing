@@ -16,5 +16,12 @@ allprojects {
 		maven {
 			url 'http://oss.3sidedcube.com:8081/artifactory/internal'
 		}
+        maven {
+            credentials {
+                username "$ARTIFACTORY_USERNAME"
+                password "$ARTIFACTORY_PASSWORD"
+            }
+            url 'http://oss.3sidedcube.com:8081/artifactory/private'
+        }
 	}
 }
