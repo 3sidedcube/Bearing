@@ -45,14 +45,25 @@ public class ReverseGeocodingTask extends GeocodingTask<Double>
 		Double lat = params[0];
 		Double lng = params[1];
 
+		// Attempt to use the native geocoder if the device supports it
+		// Native geocoding is sometimes spotty and will fail, so if it doesn't return anything then use the remote geocoder
 		if (deviceHasNativeGeocoding())
 		{
-			return addressForNativeGeocodedQuery(lat, lng);
+			try
+			{
+				List<Address> nativeGeocodingResults = addressForNativeGeocodedQuery(lat, lng);
+				if (nativeGeocodingResults != null && !nativeGeocodingResults.isEmpty())
+				{
+					return nativeGeocodingResults;
+				}
+			}
+			catch (IOException ex)
+			{
+				// continue and try to use the remote geocoder
+			}
 		}
-		else
-		{
-			return addressForRemoteGeocodedQuery(lat, lng);
-		}
+
+		return addressForRemoteGeocodedQuery(lat, lng);
 	}
 
 	/**
@@ -68,25 +79,10 @@ public class ReverseGeocodingTask extends GeocodingTask<Double>
 	 * @param longitude The longitude of the location to reverse geocode
 	 * @return The geocoded location
 	 */
-	private List<Address> addressForNativeGeocodedQuery(Double latitude, Double longitude)
+	private List<Address> addressForNativeGeocodedQuery(Double latitude, Double longitude) throws IOException
 	{
 		Geocoder geocoder = new Geocoder(context, locale);
-
-		try
-		{
-			List<Address> results = geocoder.getFromLocation(latitude, longitude, resultCount);
-
-			if (results != null && results.size() > 0)
-			{
-				return results;
-			}
-		}
-		catch (IOException ex)
-		{
-			return addressForRemoteGeocodedQuery(latitude, longitude);
-		}
-
-		return null;
+		return geocoder.getFromLocation(latitude, longitude, resultCount);
 	}
 
 	/**

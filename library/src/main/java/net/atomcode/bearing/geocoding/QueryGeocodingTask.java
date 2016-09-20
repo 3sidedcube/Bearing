@@ -34,14 +34,25 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 
 		String query = params[0];
 
+		// Attempt to use the native geocoder if the device supports it
+		// Native geocoding is sometimes spotty and will fail, so if it doesn't return anything then use the remote geocoder
 		if (deviceHasNativeGeocoding())
 		{
-			return addressForNativeGeocodedQuery(query);
+			try
+			{
+				List<Address> nativeGeocodingResults = addressForNativeGeocodedQuery(query);
+				if (nativeGeocodingResults != null && !nativeGeocodingResults.isEmpty())
+				{
+					return nativeGeocodingResults;
+				}
+			}
+			catch (IOException ex)
+			{
+				// continue and try to use the remote geocoder
+			}
 		}
-		else
-		{
-			return addressForRemoteGeocodedQuery(query);
-		}
+
+		return addressForRemoteGeocodedQuery(query);
 	}
 
 	/**
@@ -51,34 +62,15 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 	 * =====
 	 * Some devices, namely Amazon kindles, will report native geocoding support but
 	 * actually not support it. This is caught by a null response. If this occurs
-	 * the fallback {@code addressForRemoteGeocodedQuery} will be called
+	 * the fallback {@code addressForRemoteGeocodedQuery} could be called
 	 *
 	 * @param query The query to geocode
 	 * @return The geocoded locations
 	 */
-	private List<Address> addressForNativeGeocodedQuery(String query)
+	private List<Address> addressForNativeGeocodedQuery(String query) throws IOException
 	{
 		Geocoder geocoder = new Geocoder(context, locale);
-
-		List<Address> results;
-
-		try
-		{
-			results = geocoder.getFromLocationName(query, resultCount);
-
-			if (results != null && !isCancelled())
-			{
-				return results;
-			}
-			else
-			{
-				return addressForRemoteGeocodedQuery(query);
-			}
-		}
-		catch (IOException ex)
-		{
-			return addressForRemoteGeocodedQuery(query);
-		}
+		return geocoder.getFromLocationName(query, resultCount);
 	}
 
 	/**
