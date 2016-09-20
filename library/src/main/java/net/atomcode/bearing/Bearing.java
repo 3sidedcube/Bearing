@@ -6,8 +6,6 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.util.Log;
 
-import com.google.android.gms.maps.model.LatLng;
-
 import net.atomcode.bearing.geocoding.GeocodingTask;
 import net.atomcode.bearing.geocoding.QueryGeocodingTask;
 import net.atomcode.bearing.geocoding.ReverseGeocodingTask;
@@ -145,12 +143,13 @@ public class Bearing
 
 	/**
 	 * Geocode the given location into a list of possible addresses
-	 * @param latLng The lat,lng coordinates to look up
+	 * @param latitude The latitude of the coordinate to reverse geocode
+	 * @param latitude The longitude of the coordinate to reverse geocode
 	 * @return The task to configure and start
 	 */
-	public GeocodingTask geocode(LatLng latLng)
+	public GeocodingTask geocode(double latitude, double longitude)
 	{
-		return new ReverseGeocodingTask(context, new Double[]{latLng.latitude, latLng.longitude});
+		return new ReverseGeocodingTask(context, new Double[]{latitude, longitude});
 	}
 
 	/**

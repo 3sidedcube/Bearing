@@ -64,8 +64,8 @@ android.libraryVariants.all { variant ->
 dependencies {
 	// Explicit dependency on support lib to allow sdk-manager plugin to prepare it
 	compile 'com.android.support:support-v4:23.2.1'
-	compile 'com.google.android.gms:play-services-base:9.4.0'
-	compile 'com.google.android.gms:play-services-location:9.4.0'
+	compile 'com.google.android.gms:play-services-base:8.4.0'
+	compile 'com.google.android.gms:play-services-location:8.4.0'
 }
 
 //apply from: '../gradle/sonatype.gradle'
