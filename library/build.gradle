@@ -1,30 +1,15 @@
-buildscript {
-	repositories {
-		mavenCentral()
-	}
-}
-
-repositories {
-	mavenCentral()
-}
-
-apply plugin: 'maven'
-apply plugin: 'signing'
 apply plugin: 'com.android.library'
 
-group 'com.3sidedcube'
-version '2.3'
-
 android {
-	compileSdkVersion 25
-	buildToolsVersion "25.0.2"
+	compileSdkVersion 26
+	buildToolsVersion "26.0.2"
 	useLibrary 'org.apache.http.legacy'
 
 	defaultConfig {
 		minSdkVersion 14
-		targetSdkVersion 25
-		versionCode calculatedVersionCode()
-		versionName project.version
+		targetSdkVersion 26
+		versionCode 100
+		versionName "1.0"
 	}
 
 	lintOptions {
@@ -32,43 +17,9 @@ android {
 	}
 }
 
-def calculatedVersionCode()
-{
-	String[] versionElements = project.version.toString().split("\\.");
-	StringBuilder builder = new StringBuilder();
-	versionElements.each { elem ->
-		builder.append(elem.format("%0" + (4 - elem.length().toInteger()) + "d", elem.toInteger()))
-	}
-
-	return Integer.valueOf(builder.toString());
-}
-
-android.libraryVariants.all { variant ->
-	def variantName = variant.name.capitalize();
-	task("generate${variantName}Javadoc", type: Javadoc) {
-		description "Generates Javadoc for the ${variantName} build"
-		source = variant.javaCompile.source
-		ext.androidJar = "${android.sdkDirectory}/platforms/${android.compileSdkVersion}/android.jar"
-		classpath = files(variant.javaCompile.classpath.files, ext.androidJar)
-
-		failOnError false
-
-		options {
-			links "http://docs.oracle.com/javase/7/docs/api/"
-			linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/docs/reference"
-			linksOffline "http://d.android.com/reference", "${android.sdkDirectory}/extras/google/google_play_services/docs/reference"
-		}
-		exclude '**/BuildConfig.java'
-		exclude '**/R.java'
-	}
-
-	//    tasks.androidJavadocsJar.dependsOn "generate${variantName}Javadoc"
-}
-
 dependencies {
 	// Explicit dependency on support lib to allow sdk-manager plugin to prepare it
-	compile 'com.google.android.gms:play-services-base:10.2.0'
-	compile 'com.google.android.gms:play-services-location:10.2.0'
+	compile 'com.google.android.gms:play-services-location:11.6.0'
 }
 
 //apply from: '../gradle/sonatype.gradle'
