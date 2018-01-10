@@ -19,7 +19,7 @@ android {
 
 dependencies {
 	// Explicit dependency on support lib to allow sdk-manager plugin to prepare it
-	compile 'com.google.android.gms:play-services-location:11.6.0'
+	compile 'com.google.android.gms:play-services-location:11.8.0'
 }
 
 //apply from: '../gradle/sonatype.gradle'
