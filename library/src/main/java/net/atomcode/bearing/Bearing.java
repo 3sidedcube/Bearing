@@ -4,8 +4,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Location;
 import android.location.LocationManager;
-
-import com.google.android.gms.maps.model.LatLng;
+import android.util.Log;
 
 import net.atomcode.bearing.geocoding.GeocodingTask;
 import net.atomcode.bearing.geocoding.QueryGeocodingTask;
@@ -82,6 +81,16 @@ public class Bearing
 		return false;
 	}
 
+	private static final boolean LOG = false;
+
+	public static void log(String requestId, String s)
+	{
+		if (LOG)
+		{
+			Log.d("Bearing", "[" + requestId + "] " +  s);
+		}
+	}
+
 	/**
 	 * Get the default {@link Bearing} instance
 	 * @param context The context in which to make requests
@@ -134,12 +143,22 @@ public class Bearing
 
 	/**
 	 * Geocode the given location into a list of possible addresses
-	 * @param latLng The lat,lng coordinates to look up
+	 * @param latitude The latitude of the coordinate to reverse geocode
+	 * @param latitude The longitude of the coordinate to reverse geocode
 	 * @return The task to configure and start
 	 */
-	public GeocodingTask geocode(LatLng latLng)
+	public GeocodingTask geocode(double latitude, double longitude)
 	{
-		return new ReverseGeocodingTask(context, new Double[]{latLng.latitude, latLng.longitude});
+		return new ReverseGeocodingTask(context, new Double[]{latitude, longitude});
+	}
+
+	/**
+	 * Gets the last known location available from the available location provider
+	 * @return The location or null
+	 */
+	public Location getLastLocation()
+	{
+		return new CurrentLocationTask(context).getLastLocation();
 	}
 
 	/**

@@ -1,35 +1,29 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
 buildscript {
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'com.android.tools.build:gradle:0.9.+'
-    }
+	repositories {
+		jcenter()
+		google()
+	}
+
+	dependencies {
+		classpath 'com.android.tools.build:gradle:3.1.4'
+	}
 }
 
-repositories {
-    mavenCentral()
+allprojects {
+	repositories {
+		jcenter()
+		google()
+		maven {
+			url 'http://oss.3sidedcube.com:8081/artifactory/internal'
+		}
+		maven {
+			credentials {
+				username "$ARTIFACTORY_USERNAME"
+				password "$ARTIFACTORY_PASSWORD"
+			}
+			url 'http://oss.3sidedcube.com:8081/artifactory/private'
+		}
+	}
 }
-
-apply plugin: 'android-library'
-
-version VERSION_NAME
-
-android {
-    compileSdkVersion 19
-    buildToolsVersion "19.0.3"
-
-    defaultConfig {
-        minSdkVersion 9
-        targetSdkVersion 19
-        versionCode VERSION_CODE.toInteger()
-        versionName VERSION_NAME
-    }
-}
-
-dependencies {
-    compile 'com.google.android.gms:play-services:4.3.23'
-}
-
-apply from: 'gradle/sonatype.gradle'
-

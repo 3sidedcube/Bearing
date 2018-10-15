@@ -6,13 +6,13 @@ package net.atomcode.bearing.location;
 public enum Accuracy
 {
 	/**
-	 * Within 100 metres
+	 * Within 2000 metres
 	 */
-	LOW(100),
+	LOW(2000),
 	/**
-	 * Within 50 metres
+	 * Within 200 metres
 	 */
-	MEDIUM(50),
+	MEDIUM(200),
 	/**
 	 * Within 20 metres
 	 */

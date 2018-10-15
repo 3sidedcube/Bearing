@@ -5,10 +5,23 @@ package net.atomcode.bearing.location;
  */
 public class LocationProviderRequest
 {
+	public static final int FALLBACK_NONE = 0x0;
+
+	/**
+	 * Use a cached location when a timeout occurs
+	 */
+	public static final int FALLBACK_CACHE = 0x1;
+
 	/*
 	 * Location accuracy
 	 */
 	public Accuracy accuracy = Accuracy.MEDIUM; // Medium accuracy by default
+
+	/*
+	 * Fallback
+	 */
+	public int fallback = FALLBACK_NONE;
+	public long fallbackTimeout = 10000;
 
 	/*
 	 * Cache
