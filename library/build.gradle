@@ -17,6 +17,7 @@ android {
 }
 
 dependencies {
+	implementation 'com.android.support:support-annotations:27.1.1'
 	// Explicit dependency on support lib to allow sdk-manager plugin to prepare it
 	implementation 'com.google.android.gms:play-services-location:15.0.1'
 }
