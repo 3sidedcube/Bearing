@@ -5,9 +5,8 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.util.Log;
 
-import org.apache.http.client.methods.HttpGet;
-
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -52,18 +51,18 @@ public class ReverseGeocodingTask extends GeocodingTask<Double>
 			try
 			{
 				List<Address> nativeGeocodingResults = addressForNativeGeocodedQuery(lat, lng);
-				if (nativeGeocodingResults != null && !nativeGeocodingResults.isEmpty())
+				if (nativeGeocodingResults != null)
 				{
 					return nativeGeocodingResults;
 				}
 			}
 			catch (IOException ex)
 			{
-				// continue and try to use the remote geocoder
+				// continue
 			}
 		}
 
-		return addressForRemoteGeocodedQuery(lat, lng);
+		return Collections.emptyList();
 	}
 
 	/**
@@ -83,18 +82,5 @@ public class ReverseGeocodingTask extends GeocodingTask<Double>
 	{
 		Geocoder geocoder = new Geocoder(context, locale);
 		return geocoder.getFromLocation(latitude, longitude, resultCount);
-	}
-
-	/**
-	 * A fallback alternative that will use a web request to geocode the query.
-	 *
-	 * @param latitude The latitiude of the location to reverse geocode
-	 * @param longitude The longitude of the location to reverse geocode
-	 * @return The geocoded location as returned from the web service.
-	 */
-	private List<Address> addressForRemoteGeocodedQuery(Double latitude, Double longitude)
-	{
-		String params = "?latlng=" + latitude + "," + longitude + "&sensor=false";
-		return super.addressForRemoteGeocodedQuery(new HttpGet(WEB_API_URL + params));
 	}
 }

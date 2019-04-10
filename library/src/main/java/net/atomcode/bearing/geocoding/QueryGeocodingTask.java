@@ -4,9 +4,8 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 
-import org.apache.http.client.methods.HttpGet;
-
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,7 +40,7 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 			try
 			{
 				List<Address> nativeGeocodingResults = addressForNativeGeocodedQuery(query);
-				if (nativeGeocodingResults != null && !nativeGeocodingResults.isEmpty())
+				if (nativeGeocodingResults != null)
 				{
 					return nativeGeocodingResults;
 				}
@@ -52,7 +51,7 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 			}
 		}
 
-		return addressForRemoteGeocodedQuery(query);
+		return Collections.emptyList();
 	}
 
 	/**
@@ -71,19 +70,5 @@ public class QueryGeocodingTask extends GeocodingTask<String>
 	{
 		Geocoder geocoder = new Geocoder(context, locale);
 		return geocoder.getFromLocationName(query, resultCount);
-	}
-
-	/**
-	 * A fallback alternative that will use a web request to geocode the query.
-	 *
-	 * @param query The query to geocode
-	 * @return The geocoded location as returned from the web service.
-	 */
-	protected List<Address> addressForRemoteGeocodedQuery(String query)
-	{
-		// Make query API compliant
-		query = query.replace(" ", "+");
-		String params = "?address=" + query + "&sensor=false";
-		return super.addressForRemoteGeocodedQuery(new HttpGet(WEB_API_URL + params));
 	}
 }
