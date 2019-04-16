@@ -98,19 +98,22 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	@Override
 	public void cancelUpdates(String requestId)
 	{
-		if (pendingRequests.containsKey(requestId))
+		if (apiClient.isConnected() || apiClient.isConnecting())
 		{
-			pendingRequests.remove(requestId);
-		}
-
-		if (runningRequests.containsKey(requestId))
-		{
-			LocationServices.FusedLocationApi.removeLocationUpdates(apiClient, runningRequests.get(requestId));
-			runningRequests.remove(requestId);
-
-			if (runningRequests.size() == 0)
+			if (pendingRequests.containsKey(requestId))
 			{
-				apiClient.disconnect();
+				pendingRequests.remove(requestId);
+			}
+
+			if (runningRequests.containsKey(requestId))
+			{
+				LocationServices.FusedLocationApi.removeLocationUpdates(apiClient, runningRequests.get(requestId));
+				runningRequests.remove(requestId);
+
+				if (runningRequests.size() == 0)
+				{
+					apiClient.disconnect();
+				}
 			}
 		}
 	}
