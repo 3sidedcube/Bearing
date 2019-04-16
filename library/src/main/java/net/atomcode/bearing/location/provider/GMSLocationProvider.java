@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -16,6 +17,7 @@ import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -297,10 +299,18 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	{
 		lastLocation = LocationServices.FusedLocationApi.getLastLocation(apiClient);
 
-		// Connected. Perform pending requests
-		for (Runnable runnable : pendingRequests.values())
+		try
 		{
-			runnable.run();
+			// Connected. Perform pending requests
+			Iterator<Runnable> runnableIterable = pendingRequests.values().iterator();
+			while (runnableIterable.hasNext())
+			{
+				runnableIterable.next().run();
+			}
+		}
+		catch (Exception e)
+		{
+			Log.e(getClass().getName(), e.getMessage());
 		}
 
 		pendingRequests.clear();
