@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provide location using Google Play services
@@ -39,7 +40,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 
 	private GoogleApiClient apiClient;
 
-	private Map<String, Runnable> pendingRequests = new HashMap<>();
+	private Map<String, Runnable> pendingRequests = new ConcurrentHashMap<>();
 	private Map<String, com.google.android.gms.location.LocationListener> runningRequests = new HashMap<>();
 	private Location lastLocation;
 
@@ -302,20 +303,11 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	{
 		lastLocation = LocationServices.FusedLocationApi.getLastLocation(apiClient);
 
-		try
+		// Connected. Perform pending requests
+		for (Runnable runnable : pendingRequests.values())
 		{
-			// Connected. Perform pending requests
-			Iterator<Runnable> runnableIterable = pendingRequests.values().iterator();
-			while (runnableIterable.hasNext())
-			{
-				runnableIterable.next().run();
-			}
+			runnable.run();
 		}
-		catch (Exception e)
-		{
-			Log.e(getClass().getName(), e.getMessage());
-		}
-
 		pendingRequests.clear();
 	}
 
