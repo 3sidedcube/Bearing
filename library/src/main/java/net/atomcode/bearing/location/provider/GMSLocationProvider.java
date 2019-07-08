@@ -62,7 +62,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	{
 		pendingRequests.clear();
 
-		if (apiClient.isConnected() || apiClient.isConnecting())
+		if (apiClient.isConnected() )
 		{
 			for (com.google.android.gms.location.LocationListener runningRequest : runningRequests.values())
 			{
@@ -99,7 +99,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	@Override
 	public void cancelUpdates(String requestId)
 	{
-		if (apiClient.isConnected() || apiClient.isConnecting())
+		if (apiClient.isConnected())
 		{
 			if (pendingRequests.containsKey(requestId))
 			{
