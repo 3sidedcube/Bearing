@@ -82,7 +82,7 @@ public abstract class GeocodingTask<T> extends AsyncTask<T, Void, List<Address>>
 	@Override protected void onPostExecute(List<Address> address)
 	{
 		super.onPostExecute(address);
-		if (address != null)
+		if (address != null && !address.isEmpty())
 		{
 			if (listener != null)
 			{
