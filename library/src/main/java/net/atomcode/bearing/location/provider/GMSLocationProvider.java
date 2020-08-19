@@ -4,6 +4,7 @@ import android.content.Context;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
+import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -16,8 +17,10 @@ import net.atomcode.bearing.location.LocationProvider;
 import net.atomcode.bearing.location.LocationProviderRequest;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Provide location using Google Play services
@@ -37,7 +40,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 
 	private GoogleApiClient apiClient;
 
-	private Map<String, Runnable> pendingRequests = new HashMap<>();
+	private Map<String, Runnable> pendingRequests = new ConcurrentHashMap<>();
 	private Map<String, com.google.android.gms.location.LocationListener> runningRequests = new HashMap<>();
 	private Location lastLocation;
 
@@ -59,7 +62,7 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	{
 		pendingRequests.clear();
 
-		if (apiClient.isConnected() || apiClient.isConnecting())
+		if (apiClient.isConnected() )
 		{
 			for (com.google.android.gms.location.LocationListener runningRequest : runningRequests.values())
 			{
@@ -96,19 +99,22 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 	@Override
 	public void cancelUpdates(String requestId)
 	{
-		if (pendingRequests.containsKey(requestId))
+		if (apiClient.isConnected())
 		{
-			pendingRequests.remove(requestId);
-		}
-
-		if (runningRequests.containsKey(requestId))
-		{
-			LocationServices.FusedLocationApi.removeLocationUpdates(apiClient, runningRequests.get(requestId));
-			runningRequests.remove(requestId);
-
-			if (runningRequests.size() == 0)
+			if (pendingRequests.containsKey(requestId))
 			{
-				apiClient.disconnect();
+				pendingRequests.remove(requestId);
+			}
+
+			if (runningRequests.containsKey(requestId))
+			{
+				LocationServices.FusedLocationApi.removeLocationUpdates(apiClient, runningRequests.get(requestId));
+				runningRequests.remove(requestId);
+
+				if (runningRequests.size() == 0)
+				{
+					apiClient.disconnect();
+				}
 			}
 		}
 	}
@@ -302,7 +308,6 @@ public class GMSLocationProvider implements LocationProvider, GoogleApiClient.Co
 		{
 			runnable.run();
 		}
-
 		pendingRequests.clear();
 	}
 
